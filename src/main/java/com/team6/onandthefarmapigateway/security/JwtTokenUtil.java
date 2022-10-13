@@ -37,32 +37,6 @@ public class JwtTokenUtil {
         this.secretKey = Keys.hmacShaKeyFor(decodedByte);
     }
 
-    public Token generateToken(Long id, String role) {
-        long tokenPeriod = 1000L * 60L * 1440L; //5분
-        long refreshPeriod = 1000L * 60L * 60L * 24L * 30L * 3L;
-
-        Claims claims = Jwts.claims();
-        claims.put("role", role);
-        claims.put("id", id);
-
-        Date now = new Date();
-        return new Token(
-                Jwts.builder()
-                        .setSubject("Access Token")
-                        //.claim("userId", userId)
-                        .setClaims(claims)
-                        .setIssuedAt(now)
-                        .setExpiration(new Date(now.getTime() + tokenPeriod))
-                        .signWith(secretKey, SignatureAlgorithm.HS512)
-                        .compact(),
-                Jwts.builder()
-                        .setSubject("Refresh Token")
-                        .setIssuedAt(now)
-                        .setExpiration(new Date(now.getTime() + refreshPeriod))
-                        .signWith(secretKey, SignatureAlgorithm.HS512)
-                        .compact());
-    }
-
     // 토큰에 담긴 payload 값 가져오기
     public Claims extractAllClaims(String token) throws ExpiredJwtException {
         String tokenDelPrefix = token.replace(TOKEN_PREFIX, "");
@@ -71,12 +45,6 @@ public class JwtTokenUtil {
                 .build()
                 .parseClaimsJws(tokenDelPrefix)
                 .getBody();
-    }
-
-    //토큰 만료되었는지 확인
-    public boolean checkExpiredToken(String token) {
-        final Date expiration = extractAllClaims(token).getExpiration();
-        return expiration.before(new Date());
     }
 
     //UserId 가져오기
