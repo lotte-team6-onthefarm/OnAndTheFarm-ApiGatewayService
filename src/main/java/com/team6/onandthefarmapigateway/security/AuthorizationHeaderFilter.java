@@ -22,19 +22,18 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
 
     private final JwtTokenUtil jwtTokenUtil;
     Environment env;
-    private String adminKey;
 
 
     public AuthorizationHeaderFilter(
                                      JwtTokenUtil jwtTokenUtil,
                                      Environment env){
+        super(AuthorizationHeaderFilter.Config.class);
         this.jwtTokenUtil = jwtTokenUtil;
         this.env = env;
-        this.adminKey = env.getProperty("jwt.admin-key");
     }
 
-    public static class Config{
-
+    public static class Config {
+        // Put configuration properties here
     }
 
     @Override
