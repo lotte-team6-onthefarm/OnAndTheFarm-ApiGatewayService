@@ -40,6 +40,7 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
+            ServerHttpResponse response = exchange.getResponse();
 
             if(!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)){
                 return onError(exchange, "No authorization header", HttpStatus.UNAUTHORIZED);
@@ -47,6 +48,7 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
 
             String accessToken = request.getHeaders().get(HttpHeaders.AUTHORIZATION).get(0);
 
+            ServerWebExchange serverWebExchange = null;
             if(accessToken != null) {
                 try{
                     String role = jwtTokenUtil.getRole(accessToken);
@@ -61,8 +63,11 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
                         // 4. 토큰 유효성 검증
                         if (jwtTokenUtil.validateToken(accessToken)) {
                             // Authentication이 아닌 헤더에 유저 정보를 담아서 보내기
-                            request.getHeaders().set("memberId", Long.toString(sellerId));
-                            request.getHeaders().set("memberRole", "seller");
+                            ServerHttpRequest newRequest = request.mutate()
+                                    .header("memberId", Long.toString(sellerId))
+                                    .header("memberRole", "seller").build();
+
+                            serverWebExchange = exchange.mutate().request(newRequest).build();
                         }
                     }
                     else{
@@ -76,8 +81,11 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
                         // 4. 토큰 유효성 검증
                         if (jwtTokenUtil.validateToken(accessToken)) {
                             // Authentication이 아닌 헤더에 유저 정보를 담아서 보내기
-                            request.getHeaders().set("memberId", Long.toString(userId));
-                            request.getHeaders().set("memberRole", "user");
+                            ServerHttpRequest newRequest = request.mutate()
+                                    .header("memberId", Long.toString(userId))
+                                    .header("memberRole", "user").build();
+
+                            serverWebExchange = exchange.mutate().request(newRequest).build();
                         }
                     }
                 }
@@ -100,8 +108,8 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
                     log.error("AuthorizationHeaderFilter - 올바르지 않은 JWT 토큰입니다.");
                 }
             }
-
-            return chain.filter(exchange);
+            return chain.filter(serverWebExchange);
+            //return chain.filter(exchange);
         };
     }
 
