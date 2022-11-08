@@ -40,16 +40,15 @@ public class EitherAuthorizationHeaderFilter extends AbstractGatewayFilterFactor
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
-            ServerHttpResponse response = exchange.getResponse();
+
             ServerWebExchange serverWebExchange = null;
             if(request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)){
                 String accessToken = request.getHeaders().get(HttpHeaders.AUTHORIZATION).get(0);
 
-
                 if(accessToken != null) {
                     try{
                         String role = jwtTokenUtil.getRole(accessToken);
-                        if(role.equals("ROLE_ADMIN")){
+                        if(role.equals("ROLE_SELLER")){
                             Long sellerId = jwtTokenUtil.getId(accessToken);
                             System.out.println("jwt 인증 필터에서 토큰 속 셀러 정보 : "+ sellerId);
 
@@ -67,7 +66,7 @@ public class EitherAuthorizationHeaderFilter extends AbstractGatewayFilterFactor
                                 serverWebExchange = exchange.mutate().request(newRequest).build();
                             }
                         }
-                        else{
+                        else if(role.equals("ROLE_USER")){
                             Long userId = jwtTokenUtil.getId(accessToken);
                             System.out.println("jwt 인증 필터에서 토큰 속 사용자 정보 : "+userId);
 
@@ -81,6 +80,24 @@ public class EitherAuthorizationHeaderFilter extends AbstractGatewayFilterFactor
                                 ServerHttpRequest newRequest = request.mutate()
                                         .header("memberId", Long.toString(userId))
                                         .header("memberRole", "user").build();
+
+                                serverWebExchange = exchange.mutate().request(newRequest).build();
+                            }
+                        }
+                        else{
+                            Long adminId = jwtTokenUtil.getId(accessToken);
+                            System.out.println("jwt 인증 필터에서 토큰 속 관리자 정보 : "+adminId);
+
+                            if (adminId == null) {
+                                throw new IllegalArgumentException("정보가 담겨있지 않은 빈 토큰입니다.");
+                            }
+
+                            // 4. 토큰 유효성 검증
+                            if (jwtTokenUtil.validateToken(accessToken)) {
+                                // Authentication이 아닌 헤더에 유저 정보를 담아서 보내기
+                                ServerHttpRequest newRequest = request.mutate()
+                                        .header("memberId", Long.toString(adminId))
+                                        .header("memberRole", "admin").build();
 
                                 serverWebExchange = exchange.mutate().request(newRequest).build();
                             }
@@ -108,8 +125,6 @@ public class EitherAuthorizationHeaderFilter extends AbstractGatewayFilterFactor
                 return chain.filter(serverWebExchange);
             }
             return chain.filter(exchange.mutate().build());
-
-            //return chain.filter(exchange);
         };
     }
 
