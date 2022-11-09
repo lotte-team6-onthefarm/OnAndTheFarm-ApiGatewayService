@@ -41,6 +41,8 @@ dependencies {
 	//security
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	testImplementation 'org.springframework.security:spring-security-test'
+
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-actuator'
 }
 
 dependencyManagement {
