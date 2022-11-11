@@ -1,5 +1,6 @@
 package com.team6.onandthefarmapigateway.security;
 
+import com.team6.onandthefarmapigateway.redis.RedisUtil;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
@@ -21,13 +22,16 @@ import reactor.core.publisher.Mono;
 public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<AuthorizationHeaderFilter.Config> {
 
     private final JwtTokenUtil jwtTokenUtil;
+    private final RedisUtil redisUtil;
     Environment env;
 
 
-    public AuthorizationHeaderFilter(
+    public AuthorizationHeaderFilter(RedisUtil redisUtil,
                                      JwtTokenUtil jwtTokenUtil,
                                      Environment env){
         super(AuthorizationHeaderFilter.Config.class);
+
+        this.redisUtil = redisUtil;
         this.jwtTokenUtil = jwtTokenUtil;
         this.env = env;
     }
@@ -49,6 +53,12 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
 
             ServerWebExchange serverWebExchange = null;
             if(accessToken != null) {
+                // 1. Access Token이 이미 재발급 되어서 redis에 블랙리스트로 들어가있는지 확인
+                String inBlackList = redisUtil.getValues(accessToken);
+                if (inBlackList != null && inBlackList.equals("BlackList")) {
+                    throw new SecurityException("사용할 수 없는 토큰입니다.");
+                }
+
                 try{
                     String role = jwtTokenUtil.getRole(accessToken);
                     if(role.equals("ROLE_SELLER")){
