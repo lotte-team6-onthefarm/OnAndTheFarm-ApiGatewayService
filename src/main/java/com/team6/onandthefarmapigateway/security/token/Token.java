@@ -1,4 +1,4 @@
-package com.team6.onandthefarmapigateway.security;
+package com.team6.onandthefarmapigateway.security.token;
 
 import lombok.Getter;
 
