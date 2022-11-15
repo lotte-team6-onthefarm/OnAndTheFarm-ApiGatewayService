@@ -1,6 +1,8 @@
 package com.team6.onandthefarmapigateway.security;
 
 import com.team6.onandthefarmapigateway.redis.RedisUtil;
+import com.team6.onandthefarmapigateway.security.exception.CustomException;
+import com.team6.onandthefarmapigateway.security.token.JwtTokenUtil;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
@@ -124,8 +126,7 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
                     throw new MalformedJwtException("올바르지 않은 JWT 토큰입니다.");
                 } catch (ExpiredJwtException ex) {
                     log.error("AuthorizationHeaderFilter - 만료된 JWT 토큰입니다.");
-                    onErrorTmp(exchange, "No authorization header", 406);
-                    throw new NullPointerException("만료된 JWT 토큰입니다.");
+                    throw new CustomException(406, "만료된 토큰입니다.");
                 } catch (UnsupportedJwtException ex) {
                     log.error("AuthorizationHeaderFilter - 지원하지 않는 형식의 JWT 토큰입니다.");
                     throw new UnsupportedJwtException("지원하지 않는 형식의 JWT 토큰입니다.");
@@ -144,15 +145,6 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
 
         ServerHttpResponse response = exchange.getResponse();
         response.setStatusCode(httpStatus);
-
-        log.error(message);
-        return response.setComplete();
-    }
-
-    private Mono<Void> onErrorTmp(ServerWebExchange exchange, String message, Integer errorCode) {
-
-        ServerHttpResponse response = exchange.getResponse();
-        response.setRawStatusCode(errorCode);
 
         log.error(message);
         return response.setComplete();
