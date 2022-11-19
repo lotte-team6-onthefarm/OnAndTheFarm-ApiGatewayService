@@ -72,8 +72,7 @@ public class EitherAuthorizationHeaderFilter extends AbstractGatewayFilterFactor
                             if (jwtTokenUtil.validateToken(accessToken)) {
                                 // Authentication이 아닌 헤더에 유저 정보를 담아서 보내기
                                 ServerHttpRequest newRequest = request.mutate()
-                                        .header("memberId", Long.toString(sellerId))
-                                        .header("memberRole", "seller").build();
+                                        .header("Authorization", accessToken).build();
 
                                 serverWebExchange = exchange.mutate().request(newRequest).build();
                             }
@@ -90,8 +89,7 @@ public class EitherAuthorizationHeaderFilter extends AbstractGatewayFilterFactor
                             if (jwtTokenUtil.validateToken(accessToken)) {
                                 // Authentication이 아닌 헤더에 유저 정보를 담아서 보내기
                                 ServerHttpRequest newRequest = request.mutate()
-                                        .header("memberId", Long.toString(userId))
-                                        .header("memberRole", "user").build();
+                                        .header("Authorization", accessToken).build();
 
                                 serverWebExchange = exchange.mutate().request(newRequest).build();
                             }
@@ -108,8 +106,7 @@ public class EitherAuthorizationHeaderFilter extends AbstractGatewayFilterFactor
                             if (jwtTokenUtil.validateToken(accessToken)) {
                                 // Authentication이 아닌 헤더에 유저 정보를 담아서 보내기
                                 ServerHttpRequest newRequest = request.mutate()
-                                        .header("memberId", Long.toString(adminId))
-                                        .header("memberRole", "admin").build();
+                                        .header("Authorization", accessToken).build();
 
                                 serverWebExchange = exchange.mutate().request(newRequest).build();
                             }
